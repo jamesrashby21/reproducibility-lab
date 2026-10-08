@@ -1,10 +1,10 @@
 ---
 title: "Reproducibility Report: Maglio & Polman (2014), Study 1"
 subtitle: "Bumper-rails version"
-author: "Your name here"
+author: "James Ashby"
 date: today
 format:
-  html:
+  pdf:
     toc: true
     toc-location: left
     embed-resources: true
@@ -121,7 +121,7 @@ Count the participants in each direction × station combination. Replace each
 
 ```{r}
 d |>
-  count("FIXME", "FIXME")
+  count("DIRECTION", "STN_NAME")
 ```
 
 Does this match the sample size in the paper (202 total, 101 per platform)?
@@ -137,7 +137,7 @@ Fill in the formula with the outcome (the distance rating) and the two
 predictors.
 
 ```{r}
-mod <- aov(FIXME ~ FIXME * FIXME, data = d)
+mod <- aov(DISTANCE ~ DIRECTION * STN_NAME, data = d)
 
 summary(mod)
 ```
@@ -179,7 +179,7 @@ ss_residual <- anova_table |>
 
 anova_table |>
   filter(term != "Residuals") |>
-  mutate(partial_eta_sq = "FIXME") |>
+  mutate(partial_eta_sq = sumsq / (sumsq + ss_residual)) |>
   select(term, df, statistic, p.value, partial_eta_sq)
 ```
 
@@ -199,20 +199,25 @@ SS_direction / SS_total.
 
 # 1. Keep only the St. George ratings
 st_george <- d |>
-  filter("FIXME")
+  filter(STN_NAME == "STG")
 
 # 2. Which group rated St. George as farther away, eastbound or westbound?
 #    No statistics yet, just the mean rating in each direction.
 st_george |>
-  group_by("FIXME") |>
-  summarize(mean_distance = "FIXME", n = n())
+  group_by("DIRECTION") |>
+  summarize(mean_distance = mean(DISTANCE), n = n())
 
 # 3. One-way ANOVA: distance predicted by direction
-st_george_mod <- aov("FIXME", data = st_george)
+st_george_mod <- aov(DISTANCE ~ DIRECTION, data = st_george)
 tidy(st_george_mod)
 
 # 4. Partial eta squared (reuse your code from above)
-"FIXME"
+st_george_tbl <- tidy(st_george_mod)
+ss_res_stg <- st_george_tbl |> filter(term == "Residuals") |> pull(sumsq)
+
+st_george_tbl |>
+  filter(term == "DIRECTION") |>
+  mutate(partial_eta_sq = sumsq / (sumsq + ss_res))
 ```
 
 #### Spadina, Bloor-Yonge, and Sherbourne
@@ -224,42 +229,105 @@ chunk three times works. If you want to try something tidier, the
 ```{r}
 #| label: spadina
 
+# 1. Keep only the Spadina ratings
+spadina <- d |>
+  filter(STN_NAME == "SPAD")
+
+# 2. Which group rated Spadina as farther away, eastbound or westbound?
+#    No statistics yet, just the mean rating in each direction.
+spadina |>
+  group_by("DIRECTION") |>
+  summarize(mean_distance = mean(DISTANCE), n = n())
+
+# 3. One-way ANOVA: distance predicted by direction
+spadina_mod <- aov(DISTANCE ~ DIRECTION, data = spadina)
+tidy(spadina_mod)
+
+# 4. Partial eta squared (reuse your code from above)
+spadina_tbl <- tidy(spadina_mod)
+ss_res_spad <- spadina_tbl |> filter(term == "Residuals") |> pull(sumsq)
+
+spadina_tbl |>
+  filter(term == "DIRECTION") |>
+  mutate(partial_eta_sq = sumsq / (sumsq + ss_res))
 ```
 
 ```{r}
 #| label: bloor-yonge
 
+# 1. Keep only the Bloor-Yonge ratings
+bloor_yonge <- d |>
+  filter(STN_NAME == "B-Y")
+
+# 2. Which group rated Bloor-Yonge as farther away, eastbound or westbound?
+#    No statistics yet, just the mean rating in each direction.
+bloor_yonge |>
+  group_by("DIRECTION") |>
+  summarize(mean_distance = mean(DISTANCE), n = n())
+
+# 3. One-way ANOVA: distance predicted by direction
+bloor_yonge_mod <- aov(DISTANCE ~ DIRECTION, data = bloor_yonge)
+tidy(bloor_yonge_mod)
+
+# 4. Partial eta squared (reuse your code from above)
+bloor_yonge_tbl <- tidy(bloor_yonge_mod)
+ss_res_by <- bloor_yonge_tbl |> filter(term == "Residuals") |> pull(sumsq)
+
+bloor_yonge_tbl |>
+  filter(term == "DIRECTION") |>
+  mutate(partial_eta_sq = sumsq / (sumsq + ss_res))
 ```
 
 ```{r}
 #| label: sherbourne
 
+# 1. Keep only the Sherbourne ratings
+sherbourne <- d |>
+  filter(STN_NAME == "SHER")
+
+# 2. Which group rated Sherbourne as farther away, eastbound or westbound?
+#    No statistics yet, just the mean rating in each direction.
+sherbourne |>
+  group_by("DIRECTION") |>
+  summarize(mean_distance = mean(DISTANCE), n = n())
+
+# 3. One-way ANOVA: distance predicted by direction
+sherbourne_mod <- aov(DISTANCE ~ DIRECTION, data = sherbourne)
+tidy(sherbourne_mod)
+
+# 4. Partial eta squared (reuse your code from above)
+sherbourne_tbl <- tidy(sherbourne_mod)
+ss_res_sher <- sherbourne_tbl |> filter(term == "Residuals") |> pull(sumsq)
+
+sherbourne_tbl |>
+  filter(term == "DIRECTION") |>
+  mutate(partial_eta_sq = sumsq / (sumsq + ss_res))
 ```
 
 Fill in this table as you go:
 
 | Station | Paper *p* | Your *p* | Paper ηp² | Your ηp² |
 |---|---|---|---|---|
-| St. George | < .001 | | .28 | |
-| Spadina | .001 | | .20 | |
-| Bloor-Yonge | .053 | | .08 | |
-| Sherbourne | < .001 | | .24 | |
+| St. George | < .001 | <.001 | .28 | .28 |
+| Spadina | .001 | .001 | .20 | .24 |
+| Bloor-Yonge | .053 | .053 | .08 | .09 |
+| Sherbourne | < .001 | < .001 | .24 | .31 |
 
 ## Step 5: Reflection
 
 Were you able to reproduce the results you attempted to reproduce? If not, which
 parts could you not reproduce?
 
-> ANSWER HERE
+> Yes, I was able to reproduce most of the results, minus the ηp² for Spadina and Sherebourne, however they were similar.
 
 How difficult was it to reproduce the results?
 
-> ANSWER HERE
+> It was difficult only because the modeling was very hard for me to conceptualize. It took a lot of research to figure out what to put in the aov() function. I'm not sure if that is due to infamiliarity with R and tidyverse, or not knowing the math concepts, but I thought I'd put it here so that I'm making sure I'm understanding it entirely.
 
 What made it hard, and what made it easy? Think about the data files, the
 variable names, and how much the paper told you about the analysis.
 
-> ANSWER HERE
+> I think that the definite hardest bug to deal with was being unable to use a hyphen in the bloor-yange label, because it registered as a subtraction sign. Thankfully I was able to scroll up and see how you dealth with it in the St-George analysis.
 
 ## Bonus questions
 
